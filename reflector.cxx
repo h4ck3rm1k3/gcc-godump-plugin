@@ -6,6 +6,9 @@ class field_type {
   some_type parent_class;
 };
 
+class identifier {
+};
+
 class field_decl {
   field_type type;  
   identifier name;
@@ -23,8 +26,6 @@ class param_type {
   some_type type;
 };
 
-class identifier {
-};
 
 class param_decl {
   param_type type;  
@@ -32,7 +33,7 @@ class param_decl {
 };
 
 class param_list {
-  add(param_decl &);
+  void add(param_decl &);
 };
 
 class method {
