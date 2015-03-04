@@ -41,6 +41,21 @@ along with GCC; see the file COPYING3.  If not see
 #include "debug.h"
 #include "gcc-internals.h"
 #include "gcc-plugin.h"
+
+//const char *const tree_code_name[];
+/* Names of tree components.
+   Used for printing out the tree and error messages.  */
+#define DEFTREECODE(SYM, NAME, TYPE, LEN) NAME,
+#define END_OF_BASE_TREE_CODES "@dummy",
+
+const char *const tree_code_name[] = {
+#include "all-tree.def"
+};
+
+#undef DEFTREECODE
+#undef END_OF_BASE_TREE_CODES
+
+
 /* We dump this information from the debug hooks.  This gives us a
    stable and maintainable API to hook into.  In order to work
    correctly when -g is used, we build our own hooks structure which
@@ -511,18 +526,20 @@ go_global_decl (tree decl)
 static void
 go_type_decl (tree decl, int local)
 {
-  //real_debug_hooks->type_decl (decl, local);
+  //printf("go_type_decl %s\n",IDENTIFIER_POINTER (DECL_NAME (decl)));
 
-  if (local || DECL_IS_BUILTIN (decl))
+  if (local || DECL_IS_BUILTIN (decl)){
+    printf("local or built in %s\n",IDENTIFIER_POINTER (DECL_NAME (decl)));
     return;
+  }
   if (DECL_NAME (decl) == NULL_TREE
       && (TYPE_NAME (TREE_TYPE (decl)) == NULL_TREE
 	  || TREE_CODE (TYPE_NAME (TREE_TYPE (decl))) != IDENTIFIER_NODE)
-      && TREE_CODE (TREE_TYPE (decl)) != ENUMERAL_TYPE)
+      && TREE_CODE (TREE_TYPE (decl)) != ENUMERAL_TYPE) {
+    printf("Skip %s\n",IDENTIFIER_POINTER (DECL_NAME (decl)));
     return;
+  }
 
-
-  printf("add type %s\n",IDENTIFIER_POINTER (DECL_NAME (decl)));
   vec_safe_push (queue, decl);
 }
 
@@ -764,90 +781,101 @@ go_format_type (struct godump_container *container, tree type,
 	    struct obstack hold_type_obstack;
 	    bool field_ok;
 
-	    if (TREE_CODE (type) == UNION_TYPE)
-	      {
-		hold_type_obstack = container->type_obstack;
-		obstack_init (&container->type_obstack);
-	      }
-
-	    field_ok = true;
-
-	    if (DECL_NAME (field) == NULL)
-	      {
-		char buf[100];
-
-		obstack_grow (ob, "Godump_", 7);
-		snprintf (buf, sizeof buf, "%d", i);
-		obstack_grow (ob, buf, strlen (buf));
-		i++;
-	      }
-	    else
+            switch (TREE_CODE (field)) {
+            case FIELD_DECL:       
               {
-		const char *var_name;
-		void **slot;
 
-		/* Start variable name with an underscore if a keyword.  */
-		var_name = IDENTIFIER_POINTER (DECL_NAME (field));
-		slot = htab_find_slot (container->keyword_hash, var_name,
-				       NO_INSERT);
-		if (slot != NULL)
-		  obstack_1grow (ob, '_');
-		go_append_string (ob, DECL_NAME (field));
-	      }
-	    obstack_1grow (ob, ' ');
-	    if (DECL_BIT_FIELD (field))
-	      {
-		obstack_grow (ob, "INVALID-bit-field", 17);
-		field_ok = false;
-	      }
-	    else
-              {
-		/* Do not expand type if a record or union type or a
-		   function pointer.  */
-		if (TYPE_NAME (TREE_TYPE (field)) != NULL_TREE
-		    && (RECORD_OR_UNION_TYPE_P (TREE_TYPE (field))
-			|| (POINTER_TYPE_P (TREE_TYPE (field))
-			    && (TREE_CODE (TREE_TYPE (TREE_TYPE (field)))
-                                == FUNCTION_TYPE))))
-		  {
-		    tree name;
-		    void **slot;
-
-		    name = TYPE_NAME (TREE_TYPE (field));
-		    if (TREE_CODE (name) == TYPE_DECL)
-		      name = DECL_NAME (name);
-
-		    slot = htab_find_slot (container->invalid_hash,
-					   IDENTIFIER_POINTER (name),
-					   NO_INSERT);
-		    if (slot != NULL)
-		      field_ok = false;
-
-		    obstack_1grow (ob, '_');
-		    go_append_string (ob, name);
-		  }
-		else
-		  {
-		    if (!go_format_type (container, TREE_TYPE (field), true,
-					 false))
-		      field_ok = false;
-		  }
-              }
-	    obstack_grow (ob, "; ", 2);
-
-	    /* Only output the first successful field of a union, and
-	       hope for the best.  */
-	    if (TREE_CODE (type) == UNION_TYPE)
-	      {
-		if (!field_ok && TREE_CHAIN (field) == NULL_TREE)
-		  {
-		    field_ok = true;
-		    ret = false;
-		  }
+                if (TREE_CODE (type) == UNION_TYPE)
+                  {
+                    hold_type_obstack = container->type_obstack;
+                    obstack_init (&container->type_obstack);
+                  }
+                
+                field_ok = true;
+                
+                if (DECL_NAME (field) == NULL)
+                  {
+                    char buf[100];
+                    
+                    obstack_grow (ob, "Godump_", 7);
+                    snprintf (buf, sizeof buf, "%d", i);
+                    obstack_grow (ob, buf, strlen (buf));
+                    i++;
+                  }
+                else
+                  {
+                    const char *var_name;
+                    void **slot;
+                    
+                    /* Start variable name with an underscore if a keyword.  */
+                    var_name = IDENTIFIER_POINTER (DECL_NAME (field));
+                    slot = htab_find_slot (container->keyword_hash, var_name,
+                                           NO_INSERT);
+                    if (slot != NULL)
+                      obstack_1grow (ob, '_');
+                    go_append_string (ob, DECL_NAME (field));
+                  }
+                obstack_1grow (ob, ' ');
+                
+                //            if (DECL_SELF_REFERENCE_P (field))
+                //              {
+                // this pointer, skip
+                //  }
+                //else 
+                if (DECL_BIT_FIELD (field))
+                  {
+                    obstack_grow (ob, "INVALID-bit-field", 17);
+                    field_ok = false;
+                  }
+                else
+                  {
+                    /* Do not expand type if a record or union type or a
+                       function pointer.  */
+                    if (TYPE_NAME (TREE_TYPE (field)) != NULL_TREE
+                        && (RECORD_OR_UNION_TYPE_P (TREE_TYPE (field))
+                            || (POINTER_TYPE_P (TREE_TYPE (field))
+                                && (TREE_CODE (TREE_TYPE (TREE_TYPE (field)))
+                                    == FUNCTION_TYPE))))
+                      {
+                        tree name;
+                        void **slot;
+                        
+                        name = TYPE_NAME (TREE_TYPE (field));
+                        if (TREE_CODE (name) == TYPE_DECL)
+                          name = DECL_NAME (name);
+                        
+                        slot = htab_find_slot (container->invalid_hash,
+                                               IDENTIFIER_POINTER (name),
+                                               NO_INSERT);
+                        if (slot != NULL)
+                          field_ok = false;
+                        
+                        obstack_1grow (ob, '_');
+                        go_append_string (ob, name);
+                      }
+                    else
+                      {
+                        if (!go_format_type (container, TREE_TYPE (field), true,
+                                             false))
+                          field_ok = false;
+                      }
+                    
+                  }
+                obstack_grow (ob, "; ", 2);
+                
+                /* Only output the first successful field of a union, and
+                   hope for the best.  */
+                if (TREE_CODE (type) == UNION_TYPE)
+                  {
+                    if (!field_ok && TREE_CHAIN (field) == NULL_TREE)
+                      {
+                        field_ok = true;
+                        ret = false;
+                      }
 		if (field_ok)
 		  {
 		    unsigned int sz;
-
+                    
 		    sz = obstack_object_size (&container->type_obstack);
 		    obstack_grow (&hold_type_obstack,
 				  obstack_base (&container->type_obstack),
@@ -863,6 +891,8 @@ go_format_type (struct godump_container *container, tree type,
 		if (!field_ok)
 		  ret = false;
 	      }
+              }
+            }
 	  }
 	obstack_1grow (ob, '}');
       }
@@ -1192,6 +1222,8 @@ go_finish ()
 
   printf("go finish\n");
 
+  fprintf (go_dump_file, "package godump\n");
+
   container.decls_seen = pointer_set_create ();
   container.pot_dummy_types = pointer_set_create ();
   container.type_hash = htab_create (100, htab_hash_string,
@@ -1253,7 +1285,7 @@ void plugin_finish_decl (void *event_data, void *data)
 {
   tree decl = (tree) event_data;
 
-  printf("Process Field %s\n",IDENTIFIER_POINTER (DECL_NAME (decl)));
+  //  printf("FinishDecl %s\n",IDENTIFIER_POINTER (DECL_NAME (decl)));
 
 
   const char *kind = NULL;
@@ -1268,6 +1300,11 @@ void plugin_finish_decl (void *event_data, void *data)
   case FUNCTION_DECL:
     go_function_decl(decl);
     break;
+
+  case FIELD_DECL:
+    //printf("field decl \n");
+    //go_field_decl(decl);
+    break;
       
   case VAR_DECL:
       if (DECL_FILE_SCOPE_P(decl))
@@ -1276,6 +1313,10 @@ void plugin_finish_decl (void *event_data, void *data)
           //Local
    break;
 
+  default:
+    printf("Other decl %s %s\n", 
+           TREE_CODE_CLASS_STRING (TREE_CODE_CLASS (TREE_CODE (decl))),
+           tree_code_name[TREE_CODE (decl)]);
    //case FIELD_DECL:
    //kind = "Field"; break;
    //default:
@@ -1288,15 +1329,17 @@ void plugin_finish_type (void *event_data, void *data)
   
   tree type = (tree) event_data;
   tree decl = TYPE_NAME (type);
-  printf ("Process struct %s\n", IDENTIFIER_POINTER (DECL_NAME(decl)));
+  /* printf ("Process struct %s\n", IDENTIFIER_POINTER (DECL_NAME(decl))); */
+  /* printf("tree %s %s\n",  */
+  /*          TREE_CODE_CLASS_STRING (TREE_CODE_CLASS (TREE_CODE (type))), */
+  /*          tree_code_name[TREE_CODE (type)]); */
 
   int local = 0;
-  if (DECL_FILE_SCOPE_P(decl))
-    local = 1;
+  //if (DECL_FILE_SCOPE_P(decl))
+    //local = 1;
 
   switch (TREE_CODE(type)) {
-  
-      
+        
   case RECORD_TYPE:
     go_type_decl(decl, local);
       break;
@@ -1305,13 +1348,21 @@ void plugin_finish_type (void *event_data, void *data)
     go_type_decl(decl, local);
       break;
    break;
+
+  default:
+    printf("Other type %s %s\n", 
+           TREE_CODE_CLASS_STRING (TREE_CODE_CLASS (TREE_CODE (type))),
+           tree_code_name[TREE_CODE (type)]);
+
   }
 }
 
 void end_of_compilation_unit(void *event_data, void *data)
-{
+{  
   go_finish();
 }
+
+
 void dump_go_spec_init (
                         const char *filename, 
                         struct plugin_name_args *plugin_info
@@ -1322,25 +1373,15 @@ void dump_go_spec_init (
     {
       error ("could not open Go dump file %qs: %m", filename);
     }
-
   
  register_callback (plugin_info->full_name, PLUGIN_FINISH_TYPE, plugin_finish_type, NULL);
 
  register_callback (plugin_info->full_name, PLUGIN_FINISH_DECL, plugin_finish_decl, NULL);
-  //go_debug_hooks = *hooks;
-  //real_debug_hooks = hooks;
-
  register_callback(plugin_info->full_name, PLUGIN_FINISH_UNIT, end_of_compilation_unit, NULL);
-
- //go_debug_hooks.finish = go_finish;
-  //  go_debug_hooks.define = go_define;
-  //  go_debug_hooks.undef = go_undef;
-
 
   macro_hash = htab_create (100, macro_hash_hashval, macro_hash_eq,
 			    macro_hash_del);
 
-  //return &go_debug_hooks;
 }
 
-//#include "gt-godump.h"
+

@@ -4,3 +4,14 @@
 *~
 *.so
 *\#
+/test.cxx
+/test.go
+/test.h
+/test2.go
+/tree.go
+/tree.spec
+/a.out
+/config/i386/i386-opts.h
+/config/vxworks-dummy.h
+/reflector.go
+/reflector_wrap.cxx
