@@ -484,6 +484,7 @@ go_decl (tree decl)
       || DECL_IS_BUILTIN (decl)
       || DECL_NAME (decl) == NULL_TREE)
     return;
+  printf("add decl %s\n",IDENTIFIER_POINTER (DECL_NAME (decl)));
   vec_safe_push (queue, decl);
 }
 
@@ -519,6 +520,9 @@ go_type_decl (tree decl, int local)
 	  || TREE_CODE (TYPE_NAME (TREE_TYPE (decl))) != IDENTIFIER_NODE)
       && TREE_CODE (TREE_TYPE (decl)) != ENUMERAL_TYPE)
     return;
+
+
+  printf("add type %s\n",IDENTIFIER_POINTER (DECL_NAME (decl)));
   vec_safe_push (queue, decl);
 }
 
@@ -1186,6 +1190,8 @@ go_finish ()
   unsigned int ix;
   tree decl;
 
+  printf("go finish\n");
+
   container.decls_seen = pointer_set_create ();
   container.pot_dummy_types = pointer_set_create ();
   container.type_hash = htab_create (100, htab_hash_string,
@@ -1200,6 +1206,9 @@ go_finish ()
 
   FOR_EACH_VEC_SAFE_ELT (queue, ix, decl)
     {
+
+      printf("Process node %s\n",IDENTIFIER_POINTER (DECL_NAME (decl)));
+
       switch (TREE_CODE (decl))
 	{
 	case FUNCTION_DECL:
@@ -1260,15 +1269,6 @@ void plugin_finish_decl (void *event_data, void *data)
     go_function_decl(decl);
     break;
       
-  case RECORD_TYPE:
-    go_type_decl(decl, local);
-      break;
-
-  case UNION_TYPE:
-    go_type_decl(decl, local);
-      break;
-    //case PARM_DECL:
-
   case VAR_DECL:
       if (DECL_FILE_SCOPE_P(decl))
         go_global_decl(decl);
@@ -1294,7 +1294,7 @@ void plugin_finish_type (void *event_data, void *data)
   if (DECL_FILE_SCOPE_P(decl))
     local = 1;
 
-  switch (TREE_CODE(decl)) {
+  switch (TREE_CODE(type)) {
   
       
   case RECORD_TYPE:
