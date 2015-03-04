@@ -3,11 +3,15 @@ GCCGO=gccgo-5
 INCPATH_5=/usr/lib/gcc/x86_64-linux-gnu/5/plugin
 INCPATH=/usr/lib/gcc/x86_64-linux-gnu/4.9.2/plugin/include
 
+
 swig :
 	swig -gccgo -intgosize 64 -go -module reflector -c++ reflector.cxx
 
+clean :
+	rm *.ii *.o *.s
+
 plugin.so : godump.c tree.c pointer-set.c gcc-internals.c
-	g++-4.9 -lgcc --save-temps -o plugin.so -shared -fPIC -fno-rtti -O2 -I. -I$(INCPATH)  $^
+	g++-4.9 -lgcc  -o plugin.so -shared -fPIC -fno-rtti -O2 -I. -I$(INCPATH)  $^
 
 check : test3
 	gccgo test.go

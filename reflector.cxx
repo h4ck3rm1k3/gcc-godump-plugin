@@ -1,9 +1,29 @@
 
+class CType {
+  /*
+    this struct is a go interface.
 
-class some_type {};
+    should generate golang:
+```
+    type CType interface {
+        GetSize() int
+        GetAlign() int
+    }
+```
+   */
+  static const int go_interface=1;  // tag this as an interface
+
+  int GetSize(){
+    const int go_interface=true; 
+  };
+
+  int GetAlign(){
+    const int go_interface=true; 
+  };
+};
 
 class field_type {
-  some_type parent_class;
+  CType parent_class;
 };
 
 class identifier {
@@ -20,10 +40,14 @@ class field_list {
 
 class class_decl {
   field_list fields;
+
+  int GetSize();
+  int GetAlign();
+
 };
 
 class param_type {
-  some_type type;
+  CType type;
 };
 
 

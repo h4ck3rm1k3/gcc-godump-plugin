@@ -15,3 +15,4 @@
 /config/vxworks-dummy.h
 /reflector.go
 /reflector_wrap.cxx
+/.#godump.c
