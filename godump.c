@@ -1243,6 +1243,10 @@ go_finish ()
 void plugin_finish_decl (void *event_data, void *data)
 {
   tree decl = (tree) event_data;
+
+  printf("Process Field %s\n",IDENTIFIER_POINTER (DECL_NAME (decl)));
+
+
   const char *kind = NULL;
 
   int local = 0;
@@ -1279,6 +1283,31 @@ void plugin_finish_decl (void *event_data, void *data)
   }
 }
 
+void plugin_finish_type (void *event_data, void *data)
+{
+  
+  tree type = (tree) event_data;
+  tree decl = TYPE_NAME (type);
+  printf ("Process struct %s\n", IDENTIFIER_POINTER (DECL_NAME(decl)));
+
+  int local = 0;
+  if (DECL_FILE_SCOPE_P(decl))
+    local = 1;
+
+  switch (TREE_CODE(decl)) {
+  
+      
+  case RECORD_TYPE:
+    go_type_decl(decl, local);
+      break;
+
+  case UNION_TYPE:
+    go_type_decl(decl, local);
+      break;
+   break;
+  }
+}
+
 void end_of_compilation_unit(void *event_data, void *data)
 {
   go_finish();
@@ -1293,6 +1322,9 @@ void dump_go_spec_init (
     {
       error ("could not open Go dump file %qs: %m", filename);
     }
+
+  
+ register_callback (plugin_info->full_name, PLUGIN_FINISH_TYPE, plugin_finish_type, NULL);
 
  register_callback (plugin_info->full_name, PLUGIN_FINISH_DECL, plugin_finish_decl, NULL);
   //go_debug_hooks = *hooks;
