@@ -3,19 +3,14 @@ GCCGO=gccgo-5
 INCPATH_5=/usr/lib/gcc/x86_64-linux-gnu/5/plugin
 INCPATH=/usr/lib/gcc/x86_64-linux-gnu/4.9.2/plugin/include
 
-testt :
-	gccgo test.go
+plugin.so : godump.c tree.c pointer-set.c gcc-internals.c
+	g++-4.9 -lgcc --save-temps -o plugin.so -shared -fPIC -fno-rtti -O2 -I. -I$(INCPATH)  $^
 
-tree.spec :tree.c godump.c
-	g++-4.9 -o plugin.so -shared -fPIC -fno-rtti -O2 -I. -I$(INCPATH) godump.c tree.c
-	#-fdump-go-spec=tree.go tree.c
-	#gcc-4.9 -c -I$(INCPATH) -fdump-go-spec=tree.spec tree.c
+test2: plugin.so
+	g++-4.9 -c -fplugin=./plugin.so test.cxx
 
-tree: tree.go
-	$(GCCGO) -c -g -o $@ $^
-
-test:
-	$(GCCGO) -fplugin=./plugin.so test.go
+test: plugin.so
+	$(GCCGO) -fplugin=./plugin.so test2.go
 
 #gcc-5-plugin-dev
 #/usr/lib/gcc/x86_64-linux-gnu/5/plugin/include

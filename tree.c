@@ -24,6 +24,8 @@
 #include "diagnostic.h"
 int plugin_is_GPL_compatible;
 
+
+
 void dump_go_spec_init (const char *filename, 
                    struct plugin_name_args *plugin_info
                         );
