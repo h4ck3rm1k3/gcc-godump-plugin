@@ -731,11 +731,16 @@ bool go_format_struct(struct godump_container *container, struct obstack *ob, tr
 	obstack_1grow (ob, '}');
 }
 
+void go_describe(tree type){
+  
+}
+
 bool go_format_interface(struct godump_container *container, struct obstack *ob, tree type) {
   bool ret = false;
   tree field;
   obstack_grow (ob, "interface {", 11);
   int i = 0;
+  go_describe(type);
   for (field = TYPE_FIELDS (type);
        field != NULL_TREE;
        field = TREE_CHAIN (field))

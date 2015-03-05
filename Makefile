@@ -11,10 +11,13 @@ clean :
 	rm *.ii *.o *.s
 
 plugin.so : godump.c tree.c pointer-set.c gcc-internals.c
-	g++-4.9 -lgcc  -o plugin.so -shared -fPIC -fno-rtti -O2 -I. -I$(INCPATH)  $^
+	g++-4.9 --save-temps -lgcc  -o plugin.so -shared -fPIC -fno-rtti -O2 -I. -I$(INCPATH)  $^
 
 check : test3
 	gccgo test.go
+
+test4: plugin.so
+	g++-4.9 -c -fplugin=./plugin.so tree_input.cxx
 
 test3: plugin.so
 	g++-4.9 -c -fplugin=./plugin.so reflector.cxx
