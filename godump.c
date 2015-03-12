@@ -641,7 +641,11 @@ bool go_format_struct(struct godump_container *container, struct obstack *ob, tr
                 //else 
                 if (DECL_BIT_FIELD (field))
                   {
-                    obstack_grow (ob, "INVALID-bit-field", 17);
+                    const char *s;
+                    char buf[100];
+                    snprintf (buf, sizeof buf, "ctypes.BitField%d",
+                              tree_low_cst(DECL_SIZE (field),1));
+                    obstack_grow (ob, buf, strlen(buf));
                     field_ok = false;
                   }
                 else
@@ -1428,6 +1432,7 @@ go_finish ()
   printf("go finish\n");
 
   fprintf (go_dump_file, "package godump\n");
+  fprintf (go_dump_file, "import \"ctypes\"\n");
 
   container.decls_seen = pointer_set_create ();
   container.pot_dummy_types = pointer_set_create ();
