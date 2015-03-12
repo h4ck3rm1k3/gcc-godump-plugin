@@ -9,17 +9,18 @@ struct double_int
 
 
 union tree_node;
-typedef union tree_node *tree;
+//typedef union tree_node *tree;
 
 //vec<tree, va_gc> * -> tree_vector_t
-typedef struct internal_tree_vector {
-  tree * item ;
-} internal_tree_vector_t;
+struct internal_tree_vector {
+  union tree_node * * item ;
+};// internal_tree_vector_t;
 
 //vec<constructor_elt, va_gc> * ->
-typedef struct internal_constructor_vector {
+//typedef 
+struct internal_constructor_vector {
   constructor_elt_t * item;
-} internal_constructor_vector_t;
+}; //internal_constructor_vector_t;
 
 enum tree_code {
 ERROR_MARK,
@@ -289,13 +290,13 @@ enum annot_expr_kind {
 };
 
 struct alias_pair {
-  tree decl;
-  tree target;
+  union tree_node * decl;
+  union tree_node * target;
 };
 
 typedef unsigned short priority_type;
 
-typedef  struct lang_flags{
+struct lang_flags{
       unsigned lang_flag_0 : 1;
       unsigned lang_flag_1 : 1;
       unsigned lang_flag_2 : 1;
@@ -312,13 +313,13 @@ typedef  struct lang_flags{
       unsigned spare0 : 3;
       unsigned spare1 : 8;
       unsigned address_space : 8;
-} t_lang_flags;
+};
 
-typedef union lang_flags_union {
-    t_lang_flags bits;
-    int length;
-    unsigned int version;
-  } t_lang_flags_union;
+union lang_flags_union {
+  struct lang_flags bits;
+  int length;
+  unsigned int version;
+};
 
 struct tree_base {
   enum tree_code code : 16;
@@ -338,17 +339,17 @@ struct tree_base {
   unsigned protected_flag : 1;
   unsigned deprecated_flag : 1;
   unsigned default_def_flag : 1;
-  t_lang_flags_union u;
+  union lang_flags_union lang_flags;
 };
 
 struct tree_typed {
   struct tree_base base;
-  tree type;
+  union tree_node * type;
 };
 
 struct tree_common {
   struct tree_typed typed;
-  tree chain;
+  union tree_node * chain;
 };
 
 struct tree_int_cst {
@@ -374,13 +375,13 @@ struct tree_string {
 
 struct tree_complex {
   struct tree_typed typed;
-  tree real;
-  tree imag;
+  union tree_node * real;
+  union tree_node * imag;
 };
 
 struct tree_vector {
   struct tree_typed typed;
-  tree elts[1];
+  union tree_node * elts[1];
 };
 
 typedef struct ht_identifier ht_identifier;
@@ -398,18 +399,18 @@ struct tree_identifier {
 
 struct tree_list {
   struct tree_common common;
-  tree purpose;
-  tree value;
+  union tree_node * purpose;
+  union tree_node * value;
 };
 
 struct tree_vec {
   struct tree_common common;
-  tree a[1];
+  union tree_node * a[1];
 };
 
 typedef struct constructor_elt {
-  tree index;
-  tree value;
+  union tree_node * index;
+  union tree_node * value;
 } constructor_elt_t;
 
 typedef struct constructor_vector {
@@ -419,7 +420,7 @@ typedef struct constructor_vector {
 
 struct tree_constructor {
   struct tree_typed typed;
-  internal_constructor_vector_t elts;
+  struct internal_constructor_vector elts;
 };
 
 enum omp_clause_depend_kind
@@ -455,43 +456,45 @@ typedef unsigned int linenum_type;
 typedef unsigned int source_location;
 typedef source_location location_t;
 
-typedef struct gimple_empty {
-} gimple;
+struct gimple_empty {
+};
+// gimple
 
 struct tree_exp {
   struct tree_typed typed;
   location_t locus;
-  tree operands[1];
+  union tree_node * operands[1];
 };
 
-typedef union ssa_use_operand_location { 
-  gimple stmt; 
-  tree ssa_name; 
-} ssa_use_operand_location_t;
+union ssa_use_operand_location { 
+  struct gimple_empty stmt; 
+  union tree_node * ssa_name; 
+} ;
 
 struct ssa_use_operand_t {
   struct ssa_use_operand_t* prev;
   struct ssa_use_operand_t* next;
-  ssa_use_operand_location_t loc;
-  tree * use;
+  union ssa_use_operand_location loc;
+  union tree_node * * use;
 };
 
-typedef union ssa_name_info_type {
+
+union ssa_name_info_type {
   struct ptr_info_def *ptr_info;
   struct range_info_def *range_info;
-} ssa_name_info_type_t;
+};// ssa_name_info_type_t;
 
-struct tree_ssa_name {
-  struct tree_typed typed;
-  tree var;
-  gimple def_stmt;
-  ssa_name_info_type_t info;
-  struct ssa_use_operand_t imm_uses;
-};
+ struct tree_ssa_name {
+   struct tree_typed typed;
+   union tree_node * var;
+   struct gimple_empty def_stmt;
+   union ssa_name_info_type info;
+   struct ssa_use_operand_t imm_uses;
+ };
 
 struct phi_arg_d {
   struct ssa_use_operand_t imm_use;
-  tree def;
+  union tree_node * def;
   location_t locus;
 };
 
@@ -583,31 +586,31 @@ enum omp_clause_code {
   OMP_CLAUSE__SIMDUID_
 };
 
-typedef gimple gimple_seq;
+//typedef gimple gimple_seq;
 
 struct tree_omp_clause {
   struct tree_common common;
   location_t locus;
   enum omp_clause_code code;
-  gimple_seq gimple_reduction_init;
-  gimple_seq gimple_reduction_merge;
-  omp_clause_subcode_t subcode;
-  tree ops[1];
+  struct gimple_empty gimple_reduction_init;
+  struct gimple_empty gimple_reduction_merge;
+  union omp_clause_subcode subcode;
+  union tree_node * ops[1];
 };
 
 struct tree_block {
   struct tree_base base;
-  tree chain;
+  union tree_node * chain;
   unsigned abstract_flag : 1;
   unsigned block_num : 31;
   location_t locus;
-  tree vars;
-  internal_tree_vector_t nonlocalized_vars;
-  tree subblocks;
-  tree supercontext;
-  tree abstract_origin;
-  tree fragment_origin;
-  tree fragment_chain;
+  union tree_node * vars;
+  struct internal_tree_vector * nonlocalized_vars;
+  union tree_node * subblocks;
+  union tree_node * supercontext;
+  union tree_node * abstract_origin;
+  union tree_node * fragment_origin;
+  union tree_node * fragment_chain;
 };
 
 typedef union tree_type_symtab {
@@ -778,9 +781,9 @@ typedef int alias_set_type;
 
 struct tree_type_common {
   struct tree_common common;
-  tree size;
-  tree size_unit;
-  tree attributes;
+  union tree_node * size;
+  union tree_node * size_unit;
+  union tree_node * attributes;
   unsigned int uid;
   unsigned int precision : 10;
   unsigned no_force_blk_flag : 1;
@@ -799,14 +802,14 @@ struct tree_type_common {
   unsigned lang_flag_6 : 1;
   unsigned int align;
   alias_set_type alias_set;
-  tree pointer_to;
-  tree reference_to;
-  tree_type_symtab_t symtab;
-  tree canonical;
-  tree next_variant;
-  tree main_variant;
-  tree context;
-  tree name;
+  union tree_node * pointer_to;
+  union tree_node * reference_to;
+  union tree_type_symtab symtab;
+  union tree_node * canonical;
+  union tree_node * next_variant;
+  union tree_node * main_variant;
+  union tree_node * context;
+  union tree_node * name;
 };
 
 struct tree_type_with_lang_specific {
@@ -816,36 +819,36 @@ struct tree_type_with_lang_specific {
 
 struct tree_type_non_common {
   struct tree_type_with_lang_specific with_lang_specific;
-  tree values;
-  tree minval;
-  tree maxval;
-  tree binfo;
+  union tree_node * values;
+  union tree_node * minval;
+  union tree_node * maxval;
+  union tree_node * binfo;
 };
 
 struct tree_binfo {
   struct tree_common common;
-  tree offset;
-  tree vtable;
-  tree virtuals;
-  tree vptr_field;
-  internal_tree_vector_t base_accesses;
-  tree inheritance;
-  tree vtt_subvtt;
-  tree vtt_vptr;
-  internal_tree_vector_t base_binfos;
+  union tree_node * offset;
+  union tree_node * vtable;
+  union tree_node * virtuals;
+  union tree_node * vptr_field;
+  struct internal_tree_vector * base_accesses;
+  union tree_node * inheritance;
+  union tree_node * vtt_subvtt;
+  union tree_node * vtt_vptr;
+  struct internal_tree_vector * base_binfos;
 };
 
 struct tree_decl_minimal {
   struct tree_common common;
   location_t locus;
   unsigned int uid;
-  tree name;
-  tree context;
+  union tree_node * name;
+  union tree_node * context;
 };
 
 struct tree_decl_common {
   struct tree_decl_minimal common;
-  tree size;
+  union tree_node * size;
   enum machine_mode mode : 8;
   unsigned nonlocal_flag : 1;
   unsigned virtual_flag : 1;
@@ -874,30 +877,30 @@ struct tree_decl_common {
   unsigned int off_align : 8;
   unsigned int align;
   unsigned int pt_uid;
-  tree size_unit;
-  tree initial;
-  tree attributes;
-  tree abstract_origin;
+  union tree_node * size_unit;
+  union tree_node * initial;
+  union tree_node * attributes;
+  union tree_node * abstract_origin;
   struct lang_decl *lang_specific;
 };
 
 struct rtx_def;
-typedef struct rtx_def *rtx;
-typedef const struct rtx_def *const_rtx;
+//typedef struct rtx_def *rtx;
+//typedef const struct rtx_def *const_rtx;
 
 
 struct tree_decl_with_rtl {
   struct tree_decl_common common;
-  rtx rtl;
+  struct rtx_def * rtl;
 };
 
 struct tree_field_decl {
   struct tree_decl_common common;
-  tree offset;
-  tree bit_field_type;
-  tree qualifier;
-  tree bit_offset;
-  tree fcontext;
+  union tree_node * offset;
+  union tree_node * bit_field_type;
+  union tree_node * qualifier;
+  union tree_node * bit_offset;
+  union tree_node * fcontext;
 };
 
 struct tree_label_decl {
@@ -916,7 +919,7 @@ struct tree_const_decl {
 
 struct tree_parm_decl {
   struct tree_decl_with_rtl common;
-  rtx incoming_rtl;
+  struct rtx_def * incoming_rtl;
 };
 
 enum symbol_visibility
@@ -940,9 +943,9 @@ enum tls_model {
 
 struct tree_decl_with_vis {
  struct tree_decl_with_rtl common;
- tree assembler_name;
- tree section_name;
- tree comdat_group;
+ union tree_node * assembler_name;
+ union tree_node * section_name;
+ union tree_node * comdat_group;
  unsigned defer_output : 1;
  unsigned hard_register : 1;
  unsigned common_flag : 1;
@@ -969,10 +972,10 @@ struct tree_var_decl {
 
 struct tree_decl_non_common {
   struct tree_decl_with_vis common;
-  tree saved_tree;
-  tree arguments;
-  tree result;
-  tree vindex;
+  union tree_node * saved_tree;
+  union tree_node * arguments;
+  union tree_node * result;
+  union tree_node * vindex;
 };
 
 enum built_in_function {
@@ -3300,9 +3303,9 @@ struct cl_option_handlers;
 struct tree_function_decl {
   struct tree_decl_non_common common;
   struct function *f;
-  tree personality;
-  tree function_specific_target;
-  tree function_specific_optimization;
+  union tree_node * personality;
+  union tree_node * function_specific_target;
+  union tree_node * function_specific_optimization;
   enum built_in_function function_code : 11;
   enum built_in_class built_in_class : 2;
   unsigned static_ctor_flag : 1;
@@ -3338,7 +3341,7 @@ struct tree_type_decl {
 struct tree_statement_list_node {
   struct tree_statement_list_node *prev;
   struct tree_statement_list_node *next;
-  tree stmt;
+  union tree_node * stmt;
 };
 
 struct tree_statement_list {
@@ -3419,35 +3422,35 @@ struct attribute_spec {
 };
 
 typedef struct record_layout_info_s {
-  tree t;
-  tree offset;
+  union tree_node * t;
+  union tree_node * offset;
   unsigned int offset_align;
-  tree bitpos;
+  union tree_node * bitpos;
   unsigned int record_align;
   unsigned int unpacked_align;
-  tree prev_field;
-  internal_tree_vector_t pending_statics;
+  union tree_node * prev_field;
+  struct internal_tree_vector pending_statics;
   int remaining_in_alignment;
   int packed_maybe_necessary;
 } *record_layout_info;
 
 struct function_args_iterator {
-  tree next;
+  union tree_node * next;
 };
 
 struct tree_map_base {
-  tree from;
+  union tree_node * from;
 };
 
 struct tree_map {
   struct tree_map_base base;
   unsigned int hash;
-  tree to;
+  union tree_node * to;
 };
 
 struct tree_decl_map {
   struct tree_map_base base;
-  tree to;
+  union tree_node * to;
 };
 
 struct tree_int_map {
@@ -3463,11 +3466,11 @@ struct tree_priority_map {
 
 struct tree_vec_map {
   struct tree_map_base base;
-  internal_tree_vector_t to;
+struct internal_tree_vector to;
 };
 
 struct call_expr_arg_iterator {
-  tree t;
+  union tree_node * t;
   int n;
   int i;
 };
@@ -3481,6 +3484,6 @@ struct const_call_expr_arg_iterator {
 };
 
 typedef struct builtin_info_type {
-  tree decl[(int)END_BUILTINS];
+  union tree_node * decl[(int)END_BUILTINS];
   bool implicit_p[(int)END_BUILTINS];
 } builtin_info_type_t;
